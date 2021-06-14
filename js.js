@@ -1,48 +1,79 @@
-const listElements = document.querySelector('#list');
-const searchInput = document.querySelector('#search');
-const languegeSelect = document.querySelector('#language-tags');
-// linguagem padrao
-let languegeTag = 'EN-US'
+const Template = (function () {
+  const languageSelect = document.querySelector("#language-tags");
+  const listElement = document.querySelector("#list");
 
-// lista com oa informações
-let listItens = [
-    {name:'javaScript 1', create_at: '2020-07-25T20:10:50Z',fork: 15300},
-    {name:'javaScript 2', create_at: '2020-07-25T20:10:50Z', fork: 18300},
-    {name:'javaScript 3', create_at: '2020-07-25T20:10:50Z', fork: 2570}
-]
+  let listItems = [];
+  let languageTag = "en-US";
 
-// atualizando a linguamgem padrao para a selecionada na tag selected
-languegeSelect.addEventListener('change', changeLanguage);
-function changeLanguage(){
-    languegeTag = languegeSelect.value
-    render()
-    
-}
-// atualizando para o navegador as informações
-function render(){
-    let html = '';
-    // formatando os valores de acordo com a linguagem
-    const numberFormatter = new Intl.NumberFormat(languegeTag);
-    const dataFormatter = new Intl.DateTimeFormat(languegeTag, {week:'long', year:'numeric',month:'long',day:'numeric'});
-    // criando a lista
-    listItens.forEach(item => {
-        const fork = numberFormatter.format(item.fork)
-        const createdAt = dataFormatter.format(new Date(item.create_at));
-        html += `
-        <li>
-            <div>
-                <b>Name</b> ${item.name}
-            </div>
-            <div>
-                <b>Create AT:</b> ${createdAt}
-            </div>
-            <div>
-                <b>Forks</b> ${fork}
-            </div>
-        </li>
-        `
-    })
-    // adcionando a lista para o navegador
-    listElements.innerHTML = html
-}
-render()
+  languageSelect.addEventListener("change", changeLanguage);
+
+  function changeLanguage() {
+    languageTag = languageSelect.value;
+    render();
+  }
+
+  function setList(list) {
+    listItems = list;
+    render();
+  }
+
+  function render() {
+    let html = "";
+    const numberFormatter = new Intl.NumberFormat(languageTag);
+    const dateFormatter = new Intl.DateTimeFormat(languageTag, {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+    listItems.forEach((item) => {
+      const forks = numberFormatter.format(item.forks);
+      const createdAt = dateFormatter.format(new Date(item.created_at));
+      html += `
+				<li>
+					<div>
+						<b>Name:</b> ${item.full_name}
+					</div>
+					<div>
+						<b>Created At:</b> ${createdAt}
+					</div>
+					<div>
+						<b>Forks:</b> ${forks}
+					</div>
+				</li>
+			`;
+    });
+    listElement.innerHTML = html;
+  }
+
+  return {
+    setList,
+  };
+})();
+
+const Data = (function ($) {
+  const searchInput = document.querySelector("#search");
+
+  searchInput.addEventListener("keyup", search);
+
+  /*function search(event){
+		if(event && event.keyCode === 13){
+			const searchQuery = searchInput.value;
+			fetch(`https://api.github.com/search/repositories?q=${searchQuery}`)
+				.then(response => response.json())
+				.then(response => response.items)
+				.then($.setList);
+		}
+	}*/
+
+  async function search(event) {
+    if (event && event.keyCode === 13) {
+      const searchQuery = searchInput.value;
+      let response = await fetch(
+        `https://api.github.com/search/repositories?q=${searchQuery}`
+      );
+      response = await response.json();
+      $.setList(response.items);
+    }
+  }
+})(Template);
